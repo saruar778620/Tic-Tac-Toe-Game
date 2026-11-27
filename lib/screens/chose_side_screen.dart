@@ -1,5 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:tic_tac_toe/models/tic_tac_toe_game.dart';
 import 'package:tic_tac_toe/screens/game_screen.dart';
+import 'package:tic_tac_toe/theme/app_theme.dart';
+import 'package:tic_tac_toe/widgets/app_button.dart';
+import 'package:tic_tac_toe/widgets/app_text.dart';
+import 'package:tic_tac_toe/widgets/entrance_animation.dart';
+import 'package:tic_tac_toe/widgets/side_option.dart';
 
 class ChoseSideScreen extends StatefulWidget {
   const ChoseSideScreen({super.key, required this.isAi});
@@ -12,7 +18,7 @@ class ChoseSideScreen extends StatefulWidget {
 
 class _ChoseSideScreenState extends State<ChoseSideScreen>
     with SingleTickerProviderStateMixin {
-  String seletesSide = 'X';
+  String _selectedSide = TicTacToeGame.x;
   late final AnimationController _controller;
   late final Animation<double> _titleAnimation;
   late final Animation<double> _xAnimation;
@@ -26,7 +32,6 @@ class _ChoseSideScreenState extends State<ChoseSideScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-
     _titleAnimation = CurvedAnimation(
       parent: _controller,
       curve: const Interval(0.05, 0.4, curve: Curves.easeOutCubic),
@@ -41,9 +46,8 @@ class _ChoseSideScreenState extends State<ChoseSideScreen>
     );
     _continueAnimation = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.55, 1.0, curve: Curves.easeOutCubic),
+      curve: const Interval(0.55, 1, curve: Curves.easeOutCubic),
     );
-
     _controller.forward();
   }
 
@@ -53,115 +57,67 @@ class _ChoseSideScreenState extends State<ChoseSideScreen>
     super.dispose();
   }
 
-  Widget _animateIn(Animation<double> animation, Widget child) {
-    final slide = Tween<Offset>(
-      begin: const Offset(0, 0.14),
-      end: Offset.zero,
-    ).animate(animation);
-
-    return FadeTransition(
-      opacity: animation,
-      child: SlideTransition(position: slide, child: child),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xfff6f6f6),
+      backgroundColor: AppTheme.backgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _animateIn(
-              _titleAnimation,
-              const Text(
+            EntranceAnimation(
+              animation: _titleAnimation,
+              child: const AppText(
                 'Pick your side',
                 style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _animateIn(
-                  _xAnimation,
-                  Column(
-                    children: [
-                      Image.asset(
-                        'assets/cros.png',
-                        width: 100,
-                        fit: BoxFit.cover,
-                      ),
-                      Transform.scale(
-                        scale: 1.5,
-                        child: Radio(
-                          value: 'X',
-                          groupValue: seletesSide,
-                          activeColor: Colors.green,
-                          onChanged: (String? value) {
-                            if (value == null) return;
-                            setState(() {
-                              seletesSide = value;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
+            RadioGroup<String>(
+              groupValue: _selectedSide,
+              onChanged: (value) {
+                if (value != null) _selectSide(value);
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  EntranceAnimation(
+                    animation: _xAnimation,
+                    child: const SideOption(mark: TicTacToeGame.x),
                   ),
-                ),
-                const SizedBox(width: 10),
-                _animateIn(
-                  _oAnimation,
-                  Column(
-                    children: [
-                      Image.asset(
-                        'assets/circle.png',
-                        width: 100,
-                        fit: BoxFit.cover,
-                      ),
-                      Transform.scale(
-                        scale: 1.5,
-                        child: Radio(
-                          value: 'O',
-                          groupValue: seletesSide,
-                          activeColor: Colors.red,
-                          onChanged: (String? value) {
-                            if (value == null) return;
-                            setState(() {
-                              seletesSide = value;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
+                  const SizedBox(width: 10),
+                  EntranceAnimation(
+                    animation: _oAnimation,
+                    child: const SideOption(mark: TicTacToeGame.o),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 20),
-            _animateIn(
-              _continueAnimation,
-              ElevatedButton(
+            EntranceAnimation(
+              animation: _continueAnimation,
+              child: AppButton(
+                label: 'Continue',
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => GameScreen(
-                        playerSide: seletesSide,
+                    MaterialPageRoute<void>(
+                      builder: (_) => GameScreen(
+                        playerSide: _selectedSide,
                         isAi: widget.isAi,
                       ),
                     ),
                   );
                 },
-                child: const Text(
-                  'Continue',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
+                minimumSize: const Size(200, 50),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _selectSide(String side) {
+    setState(() => _selectedSide = side);
   }
 }
